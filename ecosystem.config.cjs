@@ -34,7 +34,8 @@ module.exports = {
         NODE_ENV: "production",
         HOST: "127.0.0.1",
         PORT: 8788,
-        QCALL_API_BASE_URL: "https://api.qcall.ai/api/v1",
+        // Same box as api.qcall.ai: call the API on loopback, skip TLS + nginx hop.
+        QCALL_API_BASE_URL: "http://127.0.0.1:3000/api/v1",
         PUBLIC_MCP_URL: "https://mcp.qcall.ai/mcp",
         // Secrets are NOT set here: put MCP_OAUTH_SECRET, GOOGLE_CLIENT_ID and
         // RECAPTCHA_SITE_KEY in ./.env (gitignored), loaded at startup.
