@@ -33,19 +33,29 @@ export function registerKnowledgeAndAnalyticsTools(server: McpServer): void {
     "qcall_create_knowledge_base",
     {
       title: "Create knowledge base",
-      description: "Create a knowledge base from plain text (FAQs, product details, policies) that assistants can answer from.",
+      description:
+        "Create a knowledge base from question/answer pairs (FAQs, prices, policies, opening hours) that assistants answer from. Turn source text into clear Q&A pairs first. Document uploads are done in the QCall app.",
       inputSchema: {
         title: z.string().min(1).max(200),
-        data: z.string().min(1).max(100_000).describe("Knowledge text"),
-        language: z.string().max(20).default("en").describe("Language code of the text, e.g. 'en', 'hi'")
+        faqs: z
+          .array(
+            z.object({
+              question: z.string().min(1).max(1000),
+              answer: z.string().min(1).max(5000)
+            })
+          )
+          .min(1)
+          .max(500)
+          .describe("Question/answer pairs"),
+        language: z.string().max(20).default("en").describe("Language code, e.g. 'en', 'hi'")
       },
       annotations: write("Create knowledge base")
     },
-    async (body) => {
+    async ({ title, faqs, language }) => {
       try {
-        const res = await getApiClient().post("/knowledgeBase/create", body);
+        const res = await getApiClient().post("/knowledgeBase/create", { title, language, data: faqs });
         const created = (asList(res.data)[0] ?? res.data ?? {}) as Record<string, unknown>;
-        return respond(`**Knowledge base created**: ${body.title}\n${fmtFields(created, ["hash_id", "status"])}`, res);
+        return respond(`**Knowledge base created**: ${title} (${faqs.length} Q&A pairs, indexing in background)\n${fmtFields(created, ["hash_id", "status"])}`, res);
       } catch (error) {
         return errorResult(error);
       }

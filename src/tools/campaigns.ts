@@ -72,7 +72,7 @@ export function registerCampaignTools(server: McpServer): void {
     async ({ campaign_id }) => {
       try {
         const res = await getApiClient().post("/campaign/start", {}, { id: campaign_id });
-        return respond(`**Campaign started.** ${res.message ?? ""}`, res);
+        return respond(`**Start requested** — QCall says: ${res.message ?? "ok"}`, res);
       } catch (error) {
         return errorResult(error);
       }
@@ -90,7 +90,7 @@ export function registerCampaignTools(server: McpServer): void {
     async ({ campaign_id }) => {
       try {
         const res = await getApiClient().put("/campaign/pauseCampaign", {}, { id: campaign_id });
-        return respond(`**Campaign paused.** ${res.message ?? ""}`, res);
+        return respond(`**Pause requested** — QCall says: ${res.message ?? "ok"}`, res);
       } catch (error) {
         return errorResult(error);
       }
@@ -108,7 +108,7 @@ export function registerCampaignTools(server: McpServer): void {
     async ({ campaign_id }) => {
       try {
         const res = await getApiClient().put("/campaign/resumeCampaign", {}, { id: campaign_id });
-        return respond(`**Campaign resumed.** ${res.message ?? ""}`, res);
+        return respond(`**Resume requested** — QCall says: ${res.message ?? "ok"}`, res);
       } catch (error) {
         return errorResult(error);
       }
