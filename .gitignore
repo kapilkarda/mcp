@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment variables — never commit
+.env
+.env.*
+!.env.example
+
+# Local Claude/Cursor configs with real keys
+claude-config.local.json
+.mcp.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/

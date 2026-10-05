@@ -1,0 +1,59 @@
+/**
+ * Mounts the OAuth 2.1 authorization server for Claude.ai / ChatGPT connectors.
+ * This origin is the issuer. The SDK's mcpAuthRouter serves AS metadata,
+ * /authorize, /token, /register (DCR), /revoke and the path-suffixed
+ * protected-resource metadata; our provider renders the QCall sign-in page and
+ * the login router completes it.
+ */
+
+import type { Express } from "express";
+import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
+import { OAuthTokenSealer } from "./oauth-token-sealer.js";
+import { QcallOAuthProvider } from "./qcall-oauth-provider.js";
+import { QcallAccountApi } from "./qcall-account-api.js";
+import { createOAuthLoginRouter } from "./oauth-login-router.js";
+
+export interface McpOAuthConfig {
+  secret: string;
+  publicOrigin: string;
+  publicMcpUrl: string;
+  apiBaseUrl: string;
+  documentationUrl: string;
+  googleClientId?: string;
+  recaptchaSiteKey?: string;
+}
+
+export interface McpOAuthHandle {
+  /** Canonical issuer URL, exactly as advertised in the AS metadata. */
+  issuer: string;
+  /** Unseals an OAuth access token into the QCall API key it carries. */
+  resolveApiKey: (accessToken: string) => string | undefined;
+}
+
+export function setupMcpOAuth(app: Express, config: McpOAuthConfig): McpOAuthHandle {
+  const issuerUrl = new URL(config.publicOrigin);
+  const provider = new QcallOAuthProvider(new OAuthTokenSealer(config.secret), {
+    googleClientId: config.googleClientId,
+    recaptchaSiteKey: config.recaptchaSiteKey
+  });
+
+  app.use(
+    mcpAuthRouter({
+      provider,
+      issuerUrl,
+      resourceServerUrl: new URL(config.publicMcpUrl),
+      scopesSupported: ["mcp"],
+      resourceName: "QCall AI",
+      serviceDocumentationUrl: new URL(config.documentationUrl),
+      // /register and /token are called server-to-server from Claude.ai / ChatGPT's
+      // shared egress IPs, so the SDK's per-IP defaults would lock out all their
+      // users. Both are stateless and cheap here; the browser-facing /authorize and
+      // /oauth/login keep per-IP limits.
+      clientRegistrationOptions: { clientSecretExpirySeconds: 0, rateLimit: false }, // DCR secrets never expire
+      tokenOptions: { rateLimit: false }
+    })
+  );
+  app.use(createOAuthLoginRouter({ provider, accountApi: new QcallAccountApi(config.apiBaseUrl) }));
+
+  return { issuer: issuerUrl.href, resolveApiKey: (token) => provider.resolveApiKey(token) };
+}

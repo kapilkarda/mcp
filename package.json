@@ -1,0 +1,56 @@
+{
+  "name": "qcall-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for QCall AI — manage AI voice assistants, place calls, run campaigns, manage contacts and knowledge bases from Claude, ChatGPT, Cursor and any MCP client",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "qcall-mcp-server": "dist/index.js",
+    "qcall-mcp-http": "dist/http-server.js"
+  },
+  "scripts": {
+    "start": "node dist/index.js",
+    "start:http": "node dist/http-server.js",
+    "dev": "tsx watch src/index.ts",
+    "dev:http": "tsx watch src/http-server.ts",
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "type-check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "smoke": "node scripts/smoke-test-http-mcp-server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "qcall",
+    "voice-ai",
+    "ai-calling",
+    "outbound-calls",
+    "campaigns"
+  ],
+  "author": "QCall AI",
+  "license": "MIT",
+  "homepage": "https://qcall.ai/mcp",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.1",
+    "axios": "^1.7.9",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
