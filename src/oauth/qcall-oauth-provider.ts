@@ -204,7 +204,8 @@ export function sendHtml(res: Response, html: string, options: HtmlPageOptions =
       "Content-Security-Policy": [
         "default-src 'none'",
         `script-src 'unsafe-inline'${external}`,
-        `style-src 'unsafe-inline'${google}`,
+        `style-src 'unsafe-inline' https://fonts.googleapis.com${google}`,
+        "font-src https://fonts.gstatic.com",
         `frame-src${external || " 'none'"}`,
         `connect-src${external || " 'none'"}`,
         "img-src https://qcall.ai data:",

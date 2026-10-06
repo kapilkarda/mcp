@@ -4,33 +4,45 @@
  * Services). All dynamic values are HTML-escaped.
  */
 
-export const LOGO_URL = "https://qcall.ai/qcall-logo-white.png";
+// Same light-theme logo, fonts and palette as app.qcall.ai's sign-in page.
+export const LOGO_URL = "https://qcall.ai/_next/image?url=%2Fqcall-logo.png&w=384&q=75";
+export const FONT_CSS_URL =
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap";
 
 const esc = (value: string): string =>
   value.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 const STYLES = `
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:#1a1a1e;color:#f4f4f6;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:16px}
-.card{width:100%;max-width:400px;background:#222226;border:1px solid #3c3c42;border-radius:12px;padding:32px}
-.logo{height:30px;display:block;margin-bottom:24px}h1{font-size:22px;margin:0 0 6px;font-weight:600}
-.sub{color:#b4b4bc;margin:0 0 22px;font-size:14px}.sub b{color:#fff}
-label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
-input{width:100%;padding:11px 12px;border:1px solid #3c3c42;border-radius:8px;font:inherit;background:#1a1a1e;color:#fff}
-input:focus{outline:2px solid #8a63f8;border-color:#6e3cf0}
-button{width:100%;margin-top:20px;padding:12px;border:0;border-radius:8px;background:#6e3cf0;color:#fff;
-font:600 14px/1 inherit;cursor:pointer}button:hover{background:#5a27d8}
-.err{background:rgb(240 80 80/.1);border:1px solid rgb(240 80 80/.35);color:#ff9b9b;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:6px}
-.or{display:flex;align-items:center;gap:10px;color:#8a8a94;font-size:12px;margin:20px 0 4px}
-.or:before,.or:after{content:"";flex:1;height:1px;background:#3c3c42}
-.foot{margin-top:22px;font-size:12px;color:#8a8a94}.foot a{color:#8a63f8}
-.grecaptcha-badge{visibility:hidden}#g{display:flex;justify-content:center;margin-top:12px}`;
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;
+background:#f4efe8 radial-gradient(rgb(28 26 24/.07) 1px,transparent 1px) 0 0/14px 14px;color:#2f2b27;
+font:15px/1.55 "IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+.card{width:100%;max-width:440px;background:#faf7f2;border:1px solid rgb(28 26 24/.12);border-radius:2px;padding:36px 32px}
+.logo{height:40px;display:block;margin:0 auto 22px}
+h1{font-family:"Newsreader",Georgia,"Times New Roman",serif;font-weight:400;font-size:26px;letter-spacing:-.01em;text-align:center;margin:0 0 8px}
+.sub{color:#55504a;margin:0 0 22px;font-size:14px;text-align:center}.sub b{color:#2f2b27;font-weight:600}
+label{display:block;font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;font-weight:500;margin:16px 0 6px;color:#2f2b27}
+input{width:100%;padding:11px 12px;border:1px solid rgb(28 26 24/.22);border-radius:2px;font:inherit;font-size:14px;background:#fff;color:#2f2b27}
+input::placeholder{color:#8a8279}
+input:focus{outline:2px solid rgb(184 69 31/.25);outline-offset:0;border-color:#b8451f}
+button{width:100%;margin-top:22px;padding:13px;border:0;border-radius:2px;background:#b8451f;color:#f7f3ec;cursor:pointer;
+font:500 14px/1 "IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}
+button:hover{background:#9a3818}
+.err{background:rgb(184 69 31/.07);border:1px solid rgb(184 69 31/.3);color:#9a3818;padding:10px 12px;border-radius:2px;font-size:13px;margin-bottom:6px}
+.warn{background:#fff7e6;border-color:#e8b14f;color:#7a4b00}
+.or{display:flex;align-items:center;gap:14px;color:#55504a;font-size:13px;margin:22px auto 6px;max-width:220px}
+.or:before,.or:after{content:"";flex:1;height:1px;background:rgb(28 26 24/.18)}
+#g{display:flex;justify-content:center;margin-top:12px;min-height:44px}
+.foot{margin-top:22px;font-size:12.5px;color:#55504a;text-align:center}.foot a{color:#b8451f;text-decoration:none}.foot a:hover{text-decoration:underline}
+.grecaptcha-badge{visibility:hidden}`;
 
 function layout(title: string, body: string, head = ""): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>${esc(title)} · QCall AI</title><style>${STYLES}</style>${head}</head>
-<body><main class="card"><img class="logo" src="${LOGO_URL}" alt="QCall AI">${body}</main></body></html>`;
+<title>${esc(title)} · QCall AI</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="${FONT_CSS_URL}">
+<style>${STYLES}</style>${head}</head>
+<body><main class="card"><img class="logo" src="${LOGO_URL}" alt="QCall.ai">${body}</main></body></html>`;
 }
 
 function errorBox(error?: string): string {
@@ -60,20 +72,20 @@ function passwordForm(o: LoginPageOptions): string {
     : `<button type="submit">Sign in &amp; allow access</button>`;
   return `<form id="pw" method="post" action="/oauth/login">
 <input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="password">
-<label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" required value="${esc(o.email || "")}">
-<label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+<label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="mail@yourcompanyname.com" required value="${esc(o.email || "")}">
+<label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your QCall password" required>
 ${submit}</form>`;
 }
 
 function googleForm(o: LoginPageOptions): string {
   if (!o.googleClientId) return "";
-  return `<div class="or">or</div>
+  return `<div class="or">Or</div>
 <form id="gform" method="post" action="/oauth/login">
 <input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="google">
 <input type="hidden" name="credential" id="gcred"></form><div id="g"></div>
 <script>function onGoogle(r){document.getElementById("gcred").value=r.credential;document.getElementById("gform").submit()}
 window.addEventListener("load",function(){google.accounts.id.initialize({client_id:${JSON.stringify(o.googleClientId)},callback:onGoogle});
-google.accounts.id.renderButton(document.getElementById("g"),{theme:"filled_black",size:"large",width:336,text:"continue_with"})})</script>`;
+google.accounts.id.renderButton(document.getElementById("g"),{theme:"outline",size:"large",shape:"pill",width:340,text:"signin_with",logo_alignment:"center"})})</script>`;
 }
 
 export function renderLoginPage(o: LoginPageOptions): string {
@@ -82,9 +94,9 @@ export function renderLoginPage(o: LoginPageOptions): string {
     (o.googleClientId ? `<script src="https://accounts.google.com/gsi/client" async defer></script>` : "");
   return layout(
     "Sign in",
-    `<h1>Sign in to QCall AI</h1>
+    `<h1>Sign in to QCall.ai</h1>
 <p class="sub"><b>${esc(o.clientName)}</b> wants to use your QCall workspace (assistants, calls, campaigns, contacts) and will return you to <b>${esc(o.redirectHost)}</b>.</p>
-${o.verified ? "" : `<div class="err" role="alert"><b>Unverified app.</b> QCall has not verified this app. Only continue if you started this connection yourself and trust <b>${esc(o.redirectHost)}</b>; it will get access to your QCall workspace, including placing calls that use your wallet balance.</div>`}
+${o.verified ? "" : `<div class="err warn" role="alert"><b>Unverified app.</b> QCall has not verified this app. Only continue if you started this connection yourself and trust <b>${esc(o.redirectHost)}</b>; it will get access to your QCall workspace, including placing calls that use your wallet balance.</div>`}
 ${errorBox(o.error)}
 ${passwordForm(o)}
 ${googleForm(o)}
