@@ -309,3 +309,14 @@ test("QcallAccountApi - creates key with email in name", async () => {
   assert("apiKey" in result);
   assert.strictEqual(mockRequest.mock.callCount() >= 1, true);
 });
+
+test("QcallAccountApi - Google login without data.workspace_id uses the JWT's workspace", async () => {
+  const { QcallAccountApi } = await import("../src/oauth/qcall-account-api.js");
+  const b64 = (o: object) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  const jwt = `${b64({ alg: "HS256" })}.${b64({ id: "u1", workspace_id: "ws-1" })}.sig`;
+  const result = (QcallAccountApi as any).toLoginResult(200, { success: true, data: { token: jwt, email: "a@b.c", steps: 1 } });
+  assert.strictEqual(result.kind, "token");
+  const noWs = `${b64({ alg: "HS256" })}.${b64({ id: "u1" })}.sig`;
+  const rejected = (QcallAccountApi as any).toLoginResult(200, { success: true, data: { token: noWs, steps: 1 } });
+  assert.strictEqual(rejected.kind, "error");
+});

@@ -42,7 +42,8 @@ export class QcallAccountApi {
     const data: QcallLoginData | undefined = body?.data;
     if (ok(status, body) && data?.token) {
       // steps === 0: sign-up onboarding not finished, so there is no usable workspace yet.
-      if (data.steps === 0 || !data.workspace_id) {
+      // Google login omits workspace_id from the response; it is always in the JWT.
+      if (data.steps === 0 || !(data.workspace_id ?? jwtWorkspaceId(data.token))) {
         return { kind: "error", message: "Finish setting up your QCall account at app.qcall.ai, then connect again." };
       }
       return { kind: "token", jwt: data.token, email: data.email };
@@ -132,6 +133,16 @@ export class QcallAccountApi {
     } catch (error) {
       console.error("[oauth] could not clean up older connector keys:", (error as Error).message);
     }
+  }
+}
+
+/** workspace_id claim of a QCall login JWT (read only, not verified: it came straight from the API). */
+export function jwtWorkspaceId(jwt: string): string | undefined {
+  try {
+    const payload = JSON.parse(Buffer.from(jwt.split(".")[1] ?? "", "base64url").toString("utf8"));
+    return typeof payload?.workspace_id === "string" && payload.workspace_id ? payload.workspace_id : undefined;
+  } catch {
+    return undefined;
   }
 }
 
