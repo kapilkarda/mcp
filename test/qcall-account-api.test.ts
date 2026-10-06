@@ -171,7 +171,8 @@ test("QcallAccountApi - createConnectorApiKey deletes older same-name keys", asy
       success: true,
       data: {
         api_key: "qc_live_new_key",
-        id: "key-new"
+        id: "key-new",
+        created_at: "2026-10-06T10:00:00.000Z"
       }
     }
   };
@@ -181,9 +182,11 @@ test("QcallAccountApi - createConnectorApiKey deletes older same-name keys", asy
     data: {
       success: true,
       data: [
-        { id: "key-1", name: "Claude via Claude.ai (MCP connector · user@example.com)" },
-        { id: "key-2", name: "Claude via Claude.ai (MCP connector · user@example.com)" },
-        { id: "key-3", name: "Other key" }
+        { id: "key-1", name: "Claude via Claude.ai (MCP connector · user@example.com)", created_at: "2026-10-05T09:00:00.000Z" },
+        { id: "key-2", name: "Claude via Claude.ai (MCP connector · user@example.com)", created_at: "2026-10-06T09:30:00.000Z" },
+        { id: "key-3", name: "Other key", created_at: "2026-10-01T00:00:00.000Z" },
+        // Same app signed in 3 seconds earlier (double submit): its key is still in use and must survive.
+        { id: "key-4", name: "Claude via Claude.ai (MCP connector · user@example.com)", created_at: "2026-10-06T09:59:57.000Z" }
       ]
     }
   };
@@ -212,8 +215,9 @@ test("QcallAccountApi - createConnectorApiKey deletes older same-name keys", asy
   });
 
   assert("apiKey" in result);
-  // Should have called create, list, and delete for key-1 and key-2
-  assert(mockRequest.mock.callCount() >= 3);
+  // Older connections (key-1, key-2) are replaced; another app's key and the 3s-old key-4 are kept.
+  const deleted = callLog.filter((c) => c.startsWith("delete")).map((c) => c.split("id=")[1]).sort();
+  assert.deepStrictEqual(deleted, ["key-1", "key-2"]);
 });
 
 test("QcallAccountApi - createConnectorApiKey without email skips cleanup", async () => {

@@ -21,6 +21,9 @@ interface QcallLoginData {
   workspace_id?: string | null;
 }
 
+// A previous connector key is replaced only if it is at least this much older than the new one.
+const STALE_KEY_AGE_MS = 10 * 60 * 1000;
+
 const ok = (status: number, data: any) => status >= 200 && status < 300 && data?.success !== false;
 
 export class QcallAccountApi {
@@ -96,7 +99,7 @@ export class QcallAccountApi {
       const apiKey = res.data?.data?.api_key;
       if (ok(res.status, res.data) && typeof apiKey === "string") {
         // Only when the name is user-specific (email known): never touch other users' keys.
-        if (connection.email) await this.deleteOlderConnectorKeys(name, res.data?.data?.id, auth);
+        if (connection.email) await this.deleteOlderConnectorKeys(name, res.data?.data?.id, res.data?.data?.created_at, auth);
         return { apiKey };
       }
       if (res.status === 403) {
@@ -115,16 +118,26 @@ export class QcallAccountApi {
    * piling up keys. Matches the exact key name (app + destination + email) and only
    * "(MCP connector" keys; best effort — a failure just leaves an extra key behind.
    */
-  private async deleteOlderConnectorKeys(name: string, keepId: string | undefined, auth: Record<string, string>): Promise<void> {
+  private async deleteOlderConnectorKeys(
+    name: string,
+    keepId: string | undefined,
+    keepCreatedAt: unknown,
+    auth: Record<string, string>
+  ): Promise<void> {
     if (!keepId || !name.includes("(MCP connector")) return;
+    // Only keys from an EARLIER connection count as stale: a second sign-in seconds later (double
+    // click, retried redirect) must not delete the key the client is still holding. Both times
+    // come from the database, so server clocks and time zones don't matter.
+    const newest = Date.parse(String(keepCreatedAt));
+    if (!Number.isFinite(newest)) return;
     try {
       const list = await this.request("get", "/api-key/list?kind=mcp", { headers: auth });
       if (!ok(list.status, list.data)) {
         console.error(`[oauth] key cleanup: list keys -> ${list.status}`);
         return;
       }
-      const stale = ((list.data?.data || []) as Array<{ id?: string; name?: string }>).filter(
-        (key) => key.name === name && key.id && key.id !== keepId
+      const stale = ((list.data?.data || []) as Array<{ id?: string; name?: string; created_at?: string }>).filter(
+        (key) => key.name === name && key.id && key.id !== keepId && newest - Date.parse(String(key.created_at)) > STALE_KEY_AGE_MS
       );
       for (const key of stale) {
         const del = await this.request("delete", `/api-key/delete?id=${encodeURIComponent(key.id!)}`, { headers: auth });

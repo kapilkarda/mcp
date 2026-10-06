@@ -71,9 +71,9 @@ export interface LoginPageOptions {
 function passwordForm(o: LoginPageOptions): string {
   const submit = o.recaptchaSiteKey
     ? `<button type="submit" class="g-recaptcha" data-sitekey="${esc(o.recaptchaSiteKey)}" data-callback="onPw">Sign in &amp; allow access</button>
-<script>function onPw(){var f=document.getElementById("pw");if(!f.reportValidity()){grecaptcha.reset();return}f.submit()}</script>`
+<script>function onPw(){var f=document.getElementById("pw");if(!f.reportValidity()){grecaptcha.reset();return}if(f.dataset.sent)return;f.dataset.sent="1";f.submit()}</script>`
     : `<button type="submit">Sign in &amp; allow access</button>`;
-  return `<form id="pw" method="post" action="/oauth/login">
+  return `<form id="pw" method="post" action="/oauth/login" onsubmit="if(this.dataset.sent)return false;this.dataset.sent=1">
 <input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="password">
 <label for="email">Email</label><input id="email" name="email" type="email" autocomplete="email" placeholder="mail@yourcompanyname.com" required value="${esc(o.email || "")}">
 <label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Your QCall password" required>
@@ -86,7 +86,7 @@ function googleForm(o: LoginPageOptions): string {
 <form id="gform" method="post" action="/oauth/login">
 <input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="google">
 <input type="hidden" name="credential" id="gcred"></form><div id="g"></div>
-<script>function onGoogle(r){document.getElementById("gcred").value=r.credential;document.getElementById("gform").submit()}
+<script>function onGoogle(r){var f=document.getElementById("gform");if(f.dataset.sent)return;f.dataset.sent="1";document.getElementById("gcred").value=r.credential;f.submit()}
 window.addEventListener("load",function(){google.accounts.id.initialize({client_id:${JSON.stringify(o.googleClientId)},callback:onGoogle});
 google.accounts.id.renderButton(document.getElementById("g"),{theme:"outline",size:"large",shape:"pill",width:340,text:"signin_with",logo_alignment:"center"})})</script>`;
 }
@@ -132,7 +132,7 @@ export function renderWorkspacePage(o: WorkspacePageOptions): string {
     "Choose a workspace",
     `<h1>Choose a workspace</h1>
 <p class="sub"><b>${esc(o.clientName)}</b> will work in the workspace you pick${o.email ? ` for <b>${esc(o.email)}</b>` : ""}. To use another workspace later, disconnect and connect again.</p>
-<form method="post" action="/oauth/login">
+<form method="post" action="/oauth/login" onsubmit="if(this.dataset.sent)return false;this.dataset.sent=1">
 <input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="workspace">
 <input type="hidden" name="pick" value="${esc(o.pick)}">${rows}</form>`
   );
