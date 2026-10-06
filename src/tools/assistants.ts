@@ -108,6 +108,37 @@ export function registerAssistantTools(server: McpServer): void {
   );
 
   server.registerTool(
+    "qcall_list_voices",
+    {
+      title: "List voices",
+      description: `List voices available for QCall assistants (name, language, gender, accent). ${VOICE_NOTE}`,
+      inputSchema: {
+        language: z.string().max(20).optional().describe("Language filter, e.g. 'hi', 'en' (substring match)"),
+        gender: z.enum(["male", "female"]).optional(),
+        limit: z.number().int().min(1).max(200).default(50),
+        response_format: responseFormat
+      },
+      annotations: readOnly("List voices")
+    },
+    async ({ language, gender, limit, response_format }) => {
+      try {
+        const res = await getApiClient().get("/user/voices");
+        const text = (v: unknown) => String(v ?? "").toLowerCase();
+        const rows = asList(res.data).filter(
+          (v) =>
+            (!language || text(v.language ?? v.lang ?? v.locale).includes(language.toLowerCase())) &&
+            (!gender || text(v.gender) === gender)
+        );
+        const shown = rows.slice(0, limit);
+        const columns = shown[0] ? Object.keys(shown[0]).filter((k) => /^(id|name|displayname|language|gender|accent|provider)$/i.test(k)) : [];
+        return respond(`**Voices** (${rows.length} match, showing ${shown.length})\n\n${fmtTable(shown, columns)}`, shown, response_format);
+      } catch (error) {
+        return errorResult(error);
+      }
+    }
+  );
+
+  server.registerTool(
     "qcall_update_assistant",
     {
       title: "Update AI assistant",

@@ -39,18 +39,21 @@ QCALL_API_KEY=qc_live_... node dist/index.js
   "env": { "QCALL_API_KEY": "qc_live_..." } } } }
 ```
 
-## Tools (25)
+## Tools (39)
 
 | Group | Tools |
 |---|---|
 | Account | `qcall_get_balance`, `qcall_get_active_plan`, `qcall_list_transactions` |
-| Assistants | `qcall_list_assistants`, `qcall_get_assistant`, `qcall_create_assistant`, `qcall_update_assistant` |
+| Assistants | `qcall_list_assistants`, `qcall_get_assistant`, `qcall_create_assistant`, `qcall_update_assistant`, `qcall_list_voices` |
 | Calls & numbers | `qcall_place_call`*, `qcall_list_calls`, `qcall_list_campaign_call_logs`, `qcall_get_call_transcript`, `qcall_list_phone_numbers`, `qcall_list_dialers` |
 | Contacts | `qcall_list_contact_lists`, `qcall_create_contact_list`, `qcall_list_contacts`, `qcall_add_contact` |
 | Campaigns | `qcall_list_campaigns`, `qcall_create_campaign`, `qcall_start_campaign`*, `qcall_pause_campaign`, `qcall_resume_campaign`* |
 | Knowledge & analytics | `qcall_list_knowledge_bases`, `qcall_create_knowledge_base`, `qcall_get_dashboard_stats` |
+| Tags | `qcall_list_tags`, `qcall_create_tag`, `qcall_tag_contacts`, `qcall_untag_contact` |
+| CRM | `qcall_search_contacts`, `qcall_get_contact`, `qcall_get_contact_call_history`, `qcall_list_deals`, `qcall_list_custom_fields` |
+| Activity & callbacks | `qcall_list_activities`, `qcall_list_callbacks`, `qcall_reschedule_callback`, `qcall_cancel_callback`* |
 
-\* Spends wallet balance / rings real phones: requires `confirm: true`, which the model may only set after the user approved.
+\* Spends wallet balance, rings real phones or cancels a scheduled call: requires `confirm: true`, which the model may only set after the user approved.
 
 Not exposed on purpose: deleting anything, buying numbers, dialer/SIP credentials, reseller and admin features. Assistant voice, AI model and knowledge-base selection are set in the QCall app (they need provider data the app's pickers build).
 

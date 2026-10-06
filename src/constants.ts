@@ -3,6 +3,8 @@
  */
 
 export const SERVER_NAME = "qcall-mcp-server";
+// Display name MCP clients show for this server.
+export const SERVER_TITLE = "QCall AI";
 export const SERVER_VERSION = "1.0.0";
 
 // QCall REST API (all routes live under /api/v1).
