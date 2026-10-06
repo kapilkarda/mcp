@@ -8,15 +8,25 @@ import express, { type Request, type Response, Router } from "express";
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import type { QcallOAuthProvider, PendingAuthRequest } from "./qcall-oauth-provider.js";
 import { sendHtml } from "./qcall-oauth-provider.js";
-import { QcallAccountApi, type LoginResult } from "./qcall-account-api.js";
-import { renderErrorPage, renderLoginPage } from "./oauth-login-pages.js";
+import { QcallAccountApi, jwtWorkspaceId, type LoginResult } from "./qcall-account-api.js";
+import { QcallWorkspaceApi, type WorkspaceChoice } from "./qcall-workspace-api.js";
+import { renderErrorPage, renderLoginPage, renderWorkspacePage } from "./oauth-login-pages.js";
 import { isTrustedRedirect, redirectLabel } from "./oauth-client-policy.js";
 
 const field = (body: Record<string, unknown>, name: string, max = 4096): string =>
   typeof body[name] === "string" ? (body[name] as string).trim().slice(0, max) : "";
 
-export function createOAuthLoginRouter(options: { provider: QcallOAuthProvider; accountApi: QcallAccountApi }): Router {
-  const { provider, accountApi } = options;
+const PICK_TTL_MS = 10 * 60 * 1000;
+const MAX_WORKSPACES = 50;
+/** Sealed between the workspace page and its POST: login token, email, offered workspaces. */
+interface PickPayload { j: string; e?: string; w: WorkspaceChoice[] }
+
+export function createOAuthLoginRouter(options: {
+  provider: QcallOAuthProvider;
+  accountApi: QcallAccountApi;
+  workspaceApi: QcallWorkspaceApi;
+}): Router {
+  const { provider, accountApi, workspaceApi } = options;
   const { googleClientId } = provider.page;
   const router = Router();
 
@@ -71,6 +81,20 @@ export function createOAuthLoginRouter(options: { provider: QcallOAuthProvider; 
       const email = field(body, "email", 320);
       let result: LoginResult;
 
+      // Second page for multi-workspace users: exchange the login token for the chosen workspace's.
+      if (step === "workspace") {
+        const pick = provider.sealer.open<PickPayload>("wspick", field(body, "pick", 8192));
+        const choice = pick?.w[Number.parseInt(field(body, "index", 4), 10)];
+        if (!pick || !choice) return showLogin("Workspace selection expired. Please sign in again.");
+        const token = await workspaceApi.workspaceToken(pick.j, choice);
+        if (!token) {
+          sendHtml(res, renderErrorPage("Could not open that workspace. Please try again."), { status: 403 });
+          return;
+        }
+        await completeAuthorization(res, pending, token, { clientName, destination, email: pick.e, workspace: choice.name });
+        return;
+      }
+
       try {
         if (step === "password") {
           const captcha = field(body, "g-recaptcha-response", 8192);
@@ -87,7 +111,27 @@ export function createOAuthLoginRouter(options: { provider: QcallOAuthProvider; 
       }
 
       if (result.kind === "error") return showLogin(result.message, email);
-      await completeAuthorization(res, pending, result.jwt, { clientName, destination, email: result.email });
+
+      // Login tokens point at the user's oldest owned workspace; let members of several choose.
+      const workspaces = (await workspaceApi.listWorkspaces(result.jwt)).slice(0, MAX_WORKSPACES);
+      if (workspaces.length > 1) {
+        const defaultId = jwtWorkspaceId(result.jwt);
+        const ordered = [...workspaces].sort((a, b) => Number(b.id === defaultId) - Number(a.id === defaultId));
+        const pick = provider.sealer.seal("wspick", { j: result.jwt, e: result.email, w: ordered }, PICK_TTL_MS);
+        sendHtml(
+          res,
+          renderWorkspacePage({
+            authRequest: sealedRequest,
+            pick,
+            clientName,
+            email: result.email,
+            workspaces: ordered.map((w) => ({ name: w.name, role: w.role, isDefault: w.id === defaultId }))
+          }),
+          { ...provider.page, redirectUri: pending.ru }
+        );
+        return;
+      }
+      await completeAuthorization(res, pending, result.jwt, { clientName, destination, email: result.email, workspace: workspaces[0]?.name });
     }
   );
 
@@ -95,7 +139,7 @@ export function createOAuthLoginRouter(options: { provider: QcallOAuthProvider; 
     res: Response,
     pending: PendingAuthRequest,
     jwt: string,
-    connection: { clientName: string; destination: string; email?: string }
+    connection: { clientName: string; destination: string; email?: string; workspace?: string }
   ) {
     const created = await accountApi.createConnectorApiKey(jwt, connection);
     if ("error" in created) {

@@ -11,6 +11,7 @@ import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
 import { OAuthTokenSealer } from "./oauth-token-sealer.js";
 import { QcallOAuthProvider } from "./qcall-oauth-provider.js";
 import { QcallAccountApi } from "./qcall-account-api.js";
+import { QcallWorkspaceApi } from "./qcall-workspace-api.js";
 import { createOAuthLoginRouter } from "./oauth-login-router.js";
 
 export interface McpOAuthConfig {
@@ -53,7 +54,13 @@ export function setupMcpOAuth(app: Express, config: McpOAuthConfig): McpOAuthHan
       tokenOptions: { rateLimit: false }
     })
   );
-  app.use(createOAuthLoginRouter({ provider, accountApi: new QcallAccountApi(config.apiBaseUrl) }));
+  app.use(
+    createOAuthLoginRouter({
+      provider,
+      accountApi: new QcallAccountApi(config.apiBaseUrl),
+      workspaceApi: new QcallWorkspaceApi(config.apiBaseUrl)
+    })
+  );
 
   return { issuer: issuerUrl.href, resolveApiKey: (token) => provider.resolveApiKey(token) };
 }

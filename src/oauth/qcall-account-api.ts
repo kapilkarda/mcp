@@ -85,10 +85,11 @@ export class QcallAccountApi {
    */
   async createConnectorApiKey(
     jwt: string,
-    connection: { clientName: string; destination: string; email?: string }
+    connection: { clientName: string; destination: string; email?: string; workspace?: string }
   ): Promise<{ apiKey: string } | { error: string }> {
     try {
-      const who = connection.email ? ` · ${connection.email}` : "";
+      // Email + workspace make the name unique per user and workspace (reconnect cleanup matches it exactly).
+      const who = (connection.email ? ` · ${connection.email}` : "") + (connection.workspace ? ` · ${connection.workspace}` : "");
       const name = `${connection.clientName} via ${connection.destination} (MCP connector${who})`.slice(0, 150);
       const auth = { Authorization: `Bearer ${jwt}` };
       const res = await this.request("post", "/api-key/create", { body: { name, kind: "mcp" }, headers: auth });

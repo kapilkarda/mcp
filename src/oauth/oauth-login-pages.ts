@@ -34,7 +34,10 @@ button:hover{background:#9a3818}
 .or:before,.or:after{content:"";flex:1;height:1px;background:rgb(28 26 24/.18)}
 #g{display:flex;justify-content:center;margin-top:12px;min-height:44px}
 .foot{margin-top:22px;font-size:12.5px;color:#55504a;text-align:center}.foot a{color:#b8451f;text-decoration:none}.foot a:hover{text-decoration:underline}
-.grecaptcha-badge{visibility:hidden}`;
+.grecaptcha-badge{visibility:hidden}
+.ws{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:10px;padding:14px 16px;background:#fff;color:#2f2b27;
+border:1px solid rgb(28 26 24/.18);text-align:left;font:500 14px/1.3 "IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;letter-spacing:0}
+.ws:hover{background:#fff;border-color:#b8451f}.ws small{font:12px "IBM Plex Mono",ui-monospace,monospace;color:#706a5f;white-space:nowrap}`;
 
 function layout(title: string, body: string, head = ""): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">
@@ -104,6 +107,34 @@ ${googleForm(o)}
 No account? <a href="https://app.qcall.ai" target="_blank" rel="noopener">Create one</a>.
 ${o.recaptchaSiteKey ? `Protected by reCAPTCHA (Google <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms</a>).` : ""}</p>`,
     head
+  );
+}
+
+export interface WorkspacePageOptions {
+  authRequest: string;
+  /** sealed "wspick" payload: login token + the workspaces offered */
+  pick: string;
+  clientName: string;
+  email?: string;
+  workspaces: Array<{ name: string; role?: string; isDefault: boolean }>;
+}
+
+/** Shown after sign-in when the user belongs to more than one workspace. */
+export function renderWorkspacePage(o: WorkspacePageOptions): string {
+  const rows = o.workspaces
+    .map(
+      (w, i) =>
+        `<button type="submit" class="ws" name="index" value="${i}"><span>${esc(w.name)}${w.isDefault ? " · default" : ""}</span>` +
+        `${w.role ? `<small>${esc(w.role)}</small>` : ""}</button>`
+    )
+    .join("");
+  return layout(
+    "Choose a workspace",
+    `<h1>Choose a workspace</h1>
+<p class="sub"><b>${esc(o.clientName)}</b> will work in the workspace you pick${o.email ? ` for <b>${esc(o.email)}</b>` : ""}. To use another workspace later, disconnect and connect again.</p>
+<form method="post" action="/oauth/login">
+<input type="hidden" name="request" value="${esc(o.authRequest)}"><input type="hidden" name="step" value="workspace">
+<input type="hidden" name="pick" value="${esc(o.pick)}">${rows}</form>`
   );
 }
 

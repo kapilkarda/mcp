@@ -11,7 +11,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { deflateRawSync, inflateRawSync } from "node:zlib";
 
-export type SealedType = "client" | "authreq" | "code" | "access" | "refresh";
+export type SealedType = "client" | "authreq" | "code" | "access" | "refresh" | "wspick";
 
 interface SealedEnvelope {
   typ: SealedType;
