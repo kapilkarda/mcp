@@ -1,6 +1,6 @@
 /**
  * CRM tools: search contacts across all lists, contact details + tags, contact
- * call history, a contact's deals and custom contact fields.
+ * call history and custom contact fields.
  * Deal/contact updates are not exposed: those backend endpoints overwrite the
  * whole record and would blank fields an AI didn't send.
  */
@@ -71,24 +71,6 @@ export function registerCrmTools(server: McpServer): void {
         const rows = asList(res.data);
         const columns = rows[0] ? ["call_sid", "callsid", "call_status", "call_duration_in_sec", "call_sentiment", "created_at"].filter((c) => c in rows[0]) : [];
         return respond(`**Calls with ${phone_number}** (${rows.length})\n\n${fmtTable(rows, columns)}`, res, response_format);
-      } catch (error) {
-        return errorResult(error);
-      }
-    }
-  );
-
-  server.registerTool(
-    "qcall_list_deals",
-    {
-      title: "List a contact's deals",
-      description: "List a contact's CRM deals (name, amount, stage, close date).",
-      inputSchema: { contact_id: uuid("Contact id from qcall_search_contacts"), response_format: responseFormat },
-      annotations: readOnly("List deals")
-    },
-    async ({ contact_id, response_format }) => {
-      try {
-        const res = await getApiClient().get("/crm/dealsList", { cid: contact_id });
-        return respond(`**Deals**\n\n${fmtTable(asList(res.data), ["id", "deal_name", "amount", "stage", "close_date"])}`, res, response_format);
       } catch (error) {
         return errorResult(error);
       }

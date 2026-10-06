@@ -39,7 +39,7 @@ QCALL_API_KEY=qc_live_... node dist/index.js
   "env": { "QCALL_API_KEY": "qc_live_..." } } } }
 ```
 
-## Tools (39)
+## Tools (38)
 
 | Group | Tools |
 |---|---|
@@ -50,7 +50,7 @@ QCALL_API_KEY=qc_live_... node dist/index.js
 | Campaigns | `qcall_list_campaigns`, `qcall_create_campaign`, `qcall_start_campaign`*, `qcall_pause_campaign`, `qcall_resume_campaign`* |
 | Knowledge & analytics | `qcall_list_knowledge_bases`, `qcall_create_knowledge_base`, `qcall_get_dashboard_stats` |
 | Tags | `qcall_list_tags`, `qcall_create_tag`, `qcall_tag_contacts`, `qcall_untag_contact` |
-| CRM | `qcall_search_contacts`, `qcall_get_contact`, `qcall_get_contact_call_history`, `qcall_list_deals`, `qcall_list_custom_fields` |
+| CRM | `qcall_search_contacts`, `qcall_get_contact`, `qcall_get_contact_call_history`, `qcall_list_custom_fields` |
 | Activity & callbacks | `qcall_list_activities`, `qcall_list_callbacks`, `qcall_reschedule_callback`, `qcall_cancel_callback`* |
 
 \* Spends wallet balance, rings real phones or cancels a scheduled call: requires `confirm: true`, which the model may only set after the user approved.
