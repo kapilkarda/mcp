@@ -12,6 +12,7 @@ import { APP_URL, E164_REGEX } from "../constants.js";
 import { getApiClient } from "../services/qcall-api-client.js";
 import { asList, errorResult, fmtFields, fmtTable, respond } from "../services/response-formatter.js";
 import { readOnly, responseFormat, uuid, write } from "./tool-schema-helpers.js";
+import { fetchNativeVoices } from "./assistant-payload.js";
 
 const ASSISTANT_COLUMNS = ["id", "name", "company_name", "voice_name", "created_at"];
 const ASSISTANT_DETAIL_FIELDS = [
@@ -74,64 +75,26 @@ export function registerAssistantTools(server: McpServer): void {
   );
 
   server.registerTool(
-    "qcall_create_assistant",
-    {
-      title: "Create AI assistant",
-      description: `Create an AI voice assistant from a name, goal, company and call script. ${VOICE_NOTE} Until a voice is chosen the workspace default is used.`,
-      inputSchema: {
-        name: textFields.name,
-        goal: textFields.goal,
-        company_name: textFields.company_name,
-        script: textFields.script,
-        start_speech: textFields.start_speech.optional(),
-        transfer_number: textFields.transfer_number.optional(),
-        maximum_time_per_call: textFields.maximum_time_per_call.optional(),
-        language: z.string().max(20).optional().describe("Language code, e.g. 'en-US', 'hi-IN'")
-      },
-      annotations: write("Create assistant")
-    },
-    async (params) => {
-      try {
-        const api = getApiClient();
-        const res = await api.post("/user/createAssistant", { ...params, is_call_flow: false });
-        // The create response carries no id; look the new assistant up by name (newest wins).
-        const list = asList((await api.get("/user/listAssistant")).data);
-        const created = list
-          .filter((a) => a.name === params.name)
-          .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
-        const id = created?.id ? ` — id \`${created.id}\`` : "";
-        return respond(`**Assistant created**: ${params.name}${id}. ${res.message ?? ""}\n\n${VOICE_NOTE}`, { ...res, assistant: created });
-      } catch (error) {
-        return errorResult(error);
-      }
-    }
-  );
-
-  server.registerTool(
     "qcall_list_voices",
     {
       title: "List voices",
-      description: `List voices available for QCall assistants (name, language, gender, accent). ${VOICE_NOTE}`,
+      description: "List QCall native voices (the app's default voice list) with voice_id, name, language, gender and accent. Pass voice_id to qcall_create_assistant to use a specific voice.",
       inputSchema: {
-        language: z.string().max(20).optional().describe("Language filter, e.g. 'hi', 'en' (substring match)"),
+        language: z.string().max(10).optional().describe("Language code filter, e.g. 'hi', 'en'"),
         gender: z.enum(["male", "female"]).optional(),
-        limit: z.number().int().min(1).max(200).default(50),
+        limit: z.number().int().min(1).max(200).default(30),
         response_format: responseFormat
       },
       annotations: readOnly("List voices")
     },
     async ({ language, gender, limit, response_format }) => {
       try {
-        const res = await getApiClient().get("/user/voices");
-        const text = (v: unknown) => String(v ?? "").toLowerCase();
-        const rows = asList(res.data).filter(
-          (v) =>
-            (!language || text(v.language ?? v.lang ?? v.locale).includes(language.toLowerCase())) &&
-            (!gender || text(v.gender) === gender)
-        );
+        const voices = await fetchNativeVoices(getApiClient());
+        const rows = voices
+          .filter((v) => (!language || String(v.labels?.language ?? "").toLowerCase() === language.toLowerCase()) && (!gender || String(v.labels?.gender ?? "").toLowerCase() === gender))
+          .map((v) => ({ voice_id: v.voice_id, name: v.name, language: v.labels?.language_name ?? v.labels?.language, gender: v.labels?.gender, accent: v.labels?.accent }));
         const shown = rows.slice(0, limit);
-        const columns = shown[0] ? Object.keys(shown[0]).filter((k) => /^(id|name|displayname|language|gender|accent|provider)$/i.test(k)) : [];
-        return respond(`**Voices** (${rows.length} match, showing ${shown.length})\n\n${fmtTable(shown, columns)}`, shown, response_format);
+        return respond(`**Voices** (${rows.length} match, showing ${shown.length})\n\n${fmtTable(shown, ["voice_id", "name", "language", "gender", "accent"])}`, shown, response_format);
       } catch (error) {
         return errorResult(error);
       }

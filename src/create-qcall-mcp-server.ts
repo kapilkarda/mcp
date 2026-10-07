@@ -7,6 +7,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { SERVER_NAME, SERVER_TITLE, SERVER_VERSION } from "./constants.js";
 import { registerAccountTools } from "./tools/account.js";
 import { registerAssistantTools } from "./tools/assistants.js";
+import { registerAssistantCreateTool } from "./tools/assistant-create.js";
 import { registerCallTools } from "./tools/calls.js";
 import { registerContactTools } from "./tools/contacts.js";
 import { registerCampaignTools } from "./tools/campaigns.js";
@@ -20,6 +21,7 @@ export function createQcallMcpServer(): McpServer {
 
   registerAccountTools(server);
   registerAssistantTools(server);
+  registerAssistantCreateTool(server);
   registerCallTools(server);
   registerContactTools(server);
   registerCampaignTools(server);
